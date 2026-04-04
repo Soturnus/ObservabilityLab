@@ -1,15 +1,21 @@
 # TaskManager
 
-Uma aplicação simples de gerenciamento de tarefas construída com Spring Boot, seguindo os princípios da Arquitetura Hexagonal.
+TaskManager é uma aplicação RESTful para gerenciamento de tarefas, construída com Spring Boot e arquitetura hexagonal. Permite criar e listar tarefas, resolvendo a necessidade de um sistema simples e escalável para controle de atividades.
 
-## Visão Geral da Arquitetura
+**Problema resolvido**: Fornece uma API para CRUD básico de tarefas, com persistência em banco de dados, ideal para integrações ou aplicações front-end.
 
-A aplicação é estruturada em camadas conforme a Arquitetura Hexagonal:
+**Stack**: Java 21, Spring Boot, Spring Data JPA, PostgreSQL, Maven.
 
-- **Domain**: Contém as entidades de negócio.
-- **Application**: Contém os serviços de aplicação e DTOs.
-- **Infrastructure**: Contém a implementação dos repositórios (JPA).
-- **Adapter**: Contém os adaptadores de entrada, como controladores REST.
+## Arquitetura Hexagonal
+
+A arquitetura separa responsabilidades em camadas independentes:
+
+- **Domain**: Entidades de negócio (ex: Task).
+- **Application**: Lógica de aplicação e DTOs (ex: TaskService, CreateTaskRequest).
+- **Infrastructure**: Implementações externas (ex: repositórios JPA).
+- **Adapter**: Interfaces de entrada/saída (ex: REST controllers).
+
+Isso permite testes isolados, fácil substituição de tecnologias e manutenção.
 
 ## Diagrama de Classes
 
@@ -53,36 +59,44 @@ classDiagram
 ## Como Executar
 
 ### Pré-requisitos
-- Java 17 ou superior
+- Java 21
 - Maven
-- PostgreSQL (via Docker Compose)
+- Docker e Docker Compose
 
 ### Passos
 1. Clone o repositório.
 2. Navegue para o diretório do projeto.
-3. Inicie o banco de dados: `docker-compose up -d`
-4. Execute `mvn spring-boot:run` ou `java -jar target/TaskManager-0.0.1-SNAPSHOT.jar`.
+3. Execute `docker-compose up -d` para subir a estrutura basica do projeto.
+4. Execute `mvn spring-boot:run`.
 
-A aplicação será iniciada na porta 8050.
+A aplicação inicia na porta 8050. O comando `docker-compose up -d` sobe o banco PostgreSQL, permitindo persistência de dados.
 
-## Endpoints da API
+## Acessos Locais
+- **API**: http://localhost:8080/tasks
+- **Actuator (health, info)**: http://localhost:8080/actuator
 
-- **POST /tasks**: Cria uma nova tarefa.
-  - Corpo da requisição: `{"title": "Título da tarefa"}`
-  - Resposta: Objeto Task criado.
+## Configuração da Aplicação
+A aplicação conecta ao PostgreSQL via Docker Compose. Variáveis em `application.yml`:
+- `DB_HOST`: localhost (padrão)
+- `DB_PORT`: 5432
+- Para produção, ajuste `spring.datasource.url` com variáveis de ambiente.
 
-- **GET /tasks**: Retorna todas as tarefas.
-  - Resposta: Lista de objetos Task.
+## Endpoints
+- **POST /tasks**: Cria tarefa.
+  - Request: `{"title": "Minha tarefa"}`
+  - Response: `{"id": "uuid", "title": "Minha tarefa", "completed": false}`
+- **GET /tasks**: Lista tarefas.
+  - Response: `[{"id": "uuid", "title": "Minha tarefa", "completed": false}]`
 
-## Tecnologias Utilizadas
+## Tecnologias
+- Java 21
 - Spring Boot
 - Spring Data JPA
 - PostgreSQL
 - Maven
+- Docker
 
 ## Estrutura de Pastas
-
-A estrutura de pastas segue os princípios da Arquitetura Hexagonal, organizando o código em camadas distintas:
 
 ```
 TaskManager/
@@ -93,59 +107,35 @@ TaskManager/
 ├── pom.xml
 ├── README.md
 ├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/
-│   │   │       └── soturno/
-│   │   │           └── TaskManager/
-│   │   │               ├── TaskManagerApplication.java
-│   │   │               ├── adapter/
-│   │   │               │   └── in/
-│   │   │               │       └── task/
-│   │   │               │           └── TaskController.java
-│   │   │               ├── application/
-│   │   │               │   └── task/
-│   │   │               │       ├── TaskService.java
-│   │   │               │       └── dto/
-│   │   │               │           └── CreateTaskRequest.java
-│   │   │               ├── domain/
-│   │   │               │   └── task/
-│   │   │               │       └── Task.java
-│   │   │               └── infrastructure/
-│   │   │                   ├── config/
-│   │   │                   ├── exception/
-│   │   │                   └── task/
-│   │   │                       └── TaskRepository.java
-│   │   └── resources/
-│   │       └── application.yml
-│   └── test/
-│       └── java/
-│           └── com/
-│               └── soturno/
-│                   └── TaskManager/
-│                       └── TaskManagerApplicationTests.java
-└── target/
-    ├── TaskManager-0.0.1-SNAPSHOT.jar
-    ├── TaskManager-0.0.1-SNAPSHOT.jar.original
-    └── classes/
-        ├── application.yml
-        └── com/
-            └── soturno/
-                └── TaskManager/
-                    ├── TaskManagerApplication.class
-                    ├── adapter/
-                    │   └── in/
-                    │       └── task/
-                    │           └── TaskController.class
-                    ├── application/
-                    │   └── task/
-                    │       ├── TaskService.class
-                    │       └── dto/
-                    │           └── CreateTaskRequest.class
-                    ├── domain/
-                    │   └── task/
-                    │       └── Task.class
-                    └── infrastructure/
-                        └── task/
-                            └── TaskRepository.class
+└──├── main/
+   │   ├── java/
+   │   │   └── com/
+   │   │       └── soturno/
+   │   │           └── TaskManager/
+   │   │               ├── TaskManagerApplication.java
+   │   │               ├── adapter/
+   │   │               │   └── in/
+   │   │               │       └── task/
+   │   │               │           └── TaskController.java
+   │   │               ├── application/
+   │   │               │   └── task/
+   │   │               │       ├── TaskService.java
+   │   │               │       └── dto/
+   │   │               │           └── CreateTaskRequest.java
+   │   │               ├── domain/
+   │   │               │   └── task/
+   │   │               │       └── Task.java
+   │   │               └── infrastructure/
+   │   │                   ├── config/
+   │   │                   ├── exception/
+   │   │                   └── task/
+   │   │                       └── TaskRepository.java
+   │   └── resources/
+   │       └── application.yml
+   └── test/
+       └── java/
+           └── com/
+               └── soturno/
+                   └── TaskManager/
+                       └── TaskManagerApplicationTests.java
 ```
