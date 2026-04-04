@@ -6,9 +6,9 @@ Uma aplicação simples de gerenciamento de tarefas construída com Spring Boot,
 
 A aplicação é estruturada em camadas conforme a Arquitetura Hexagonal:
 
-- **Domain**: Contém as entidades de negócio, interfaces de repositório e serviços de domínio.
-- **Application**: Contém os casos de uso (use cases) que orquestram a lógica de aplicação.
-- **Infrastructure**: Contém a implementação dos repositórios, mapeadores e configurações de infraestrutura (JPA).
+- **Domain**: Contém as entidades de negócio.
+- **Application**: Contém os serviços de aplicação e DTOs.
+- **Infrastructure**: Contém a implementação dos repositórios (JPA).
 - **Adapter**: Contém os adaptadores de entrada, como controladores REST.
 
 ## Diagrama de Classes
@@ -20,7 +20,6 @@ classDiagram
         -String title
         -boolean completed
         +Task(String title)
-        +Task(UUID id, String title, boolean completed)
         +complete()
         +getId() UUID
         +getTitle() String
@@ -29,70 +28,26 @@ classDiagram
     class TaskRepository {
         <<interface>>
         +save(Task) Task
-        +findAll() List~Task~
+        +findAllTasks() List~Task~
     }
     class TaskService {
-        +createTask(String) Task
-    }
-    class CreateTaskUseCase {
-        -TaskService taskService
-        -TaskRepository taskRepository
-        +execute(String) Task
-    }
-    class GetAllTasksUseCase {
-        -TaskRepository taskRepository
-        +execute() List~Task~
-    }
-    class JpaTask {
-        -UUID id
-        -String title
-        -boolean completed
-    }
-    class JpaTaskRepository {
-        <<interface>>
-        +save(JpaTask) JpaTask
-        +findAll() List~JpaTask~
-    }
-    class TaskMapper {
-        +toJpa(Task) JpaTask
-        +toDomain(JpaTask) Task
-    }
-    class TaskRepositoryImpl {
-        -JpaTaskRepository jpaTaskRepository
-        +save(Task) Task
-        +findAll() List~Task~
+        -TaskRepository repository
+        +create(String) Task
+        +list() List~Task~
     }
     class TaskController {
-        -CreateTaskUseCase createTaskUseCase
-        -GetAllTasksUseCase getAllTasksUseCase
-        +createTask(CreateTaskRequest) ResponseEntity~TaskResponse~
-        +getAllTasks() ResponseEntity~List~TaskResponse~~
+        -TaskService service
+        +create(CreateTaskRequest) Task
+        +list() List~Task~
     }
     class CreateTaskRequest {
         -String title
         +getTitle() String
         +setTitle(String)
     }
-    class TaskResponse {
-        -String id
-        -String title
-        -boolean completed
-        +TaskResponse(String, String, boolean)
-        +getId() String
-        +getTitle() String
-        +isCompleted() boolean
-    }
-    TaskController --> CreateTaskUseCase
-    TaskController --> GetAllTasksUseCase
-    CreateTaskUseCase --> TaskService
-    CreateTaskUseCase --> TaskRepository
-    GetAllTasksUseCase --> TaskRepository
-    TaskRepositoryImpl ..|> TaskRepository
-    TaskRepositoryImpl --> JpaTaskRepository
-    TaskRepositoryImpl --> TaskMapper
-    TaskMapper --> Task
-    TaskMapper --> JpaTask
-    JpaTaskRepository --> JpaTask
+    TaskController --> TaskService
+    TaskService --> TaskRepository
+    TaskRepository --> Task
 ```
 
 ## Como Executar
@@ -100,27 +55,29 @@ classDiagram
 ### Pré-requisitos
 - Java 17 ou superior
 - Maven
+- PostgreSQL (via Docker Compose)
 
 ### Passos
 1. Clone o repositório.
 2. Navegue para o diretório do projeto.
-3. Execute `mvn spring-boot:run` ou `java -jar target/TaskManager-0.0.1-SNAPSHOT.jar`.
+3. Inicie o banco de dados: `docker-compose up -d`
+4. Execute `mvn spring-boot:run` ou `java -jar target/TaskManager-0.0.1-SNAPSHOT.jar`.
 
-A aplicação será iniciada na porta 8080.
+A aplicação será iniciada na porta 8050.
 
 ## Endpoints da API
 
 - **POST /tasks**: Cria uma nova tarefa.
   - Corpo da requisição: `{"title": "Título da tarefa"}`
-  - Resposta: Detalhes da tarefa criada.
+  - Resposta: Objeto Task criado.
 
 - **GET /tasks**: Retorna todas as tarefas.
-  - Resposta: Lista de tarefas.
+  - Resposta: Lista de objetos Task.
 
 ## Tecnologias Utilizadas
 - Spring Boot
 - Spring Data JPA
-- H2 Database (ou configure outro no application.yml)
+- PostgreSQL
 - Maven
 
 ## Estrutura de Pastas
@@ -136,40 +93,59 @@ TaskManager/
 ├── pom.xml
 ├── README.md
 ├── src/
-└──├── main/
-   │   ├── java/
-   │   │   └── com/
-   │   │       └── soturno/
-   │   │           └── TaskManager/
-   │   │               ├── TaskManagerApplication.java
-   │   │               ├── adapter/
-   │   │               │   └── in/
-   │   │               │       └── task/
-   │   │               │           └── TaskController.java
-   │   │               ├── application/
-   │   │               │   └── task/
-   │   │               │       ├── CreateTaskUseCase.java
-   │   │               │       └── GetAllTasksUseCase.java
-   │   │               ├── domain/
-   │   │               │   └── task/
-   │   │               │       ├── Task.java
-   │   │               │       ├── TaskRepository.java
-   │   │               │       └── TaskService.java
-   │   │               └── infrastructure/
-   │   │                   ├── config/
-   │   │                   ├── exception/
-   │   │                   └── task/
-   │   │                       ├── JpaTask.java
-   │   │                       ├── JpaTaskRepository.java
-   │   │                       ├── TaskMapper.java
-   │   │                       └── TaskRepositoryImpl.java
-   │   └── resources/
-   │       └── application.yml
-   └── test/
-       └── java/
-           └── com/
-               └── soturno/
-                   └── TaskManager/
-                       └── TaskManagerApplicationTests.java
-
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/
+│   │   │       └── soturno/
+│   │   │           └── TaskManager/
+│   │   │               ├── TaskManagerApplication.java
+│   │   │               ├── adapter/
+│   │   │               │   └── in/
+│   │   │               │       └── task/
+│   │   │               │           └── TaskController.java
+│   │   │               ├── application/
+│   │   │               │   └── task/
+│   │   │               │       ├── TaskService.java
+│   │   │               │       └── dto/
+│   │   │               │           └── CreateTaskRequest.java
+│   │   │               ├── domain/
+│   │   │               │   └── task/
+│   │   │               │       └── Task.java
+│   │   │               └── infrastructure/
+│   │   │                   ├── config/
+│   │   │                   ├── exception/
+│   │   │                   └── task/
+│   │   │                       └── TaskRepository.java
+│   │   └── resources/
+│   │       └── application.yml
+│   └── test/
+│       └── java/
+│           └── com/
+│               └── soturno/
+│                   └── TaskManager/
+│                       └── TaskManagerApplicationTests.java
+└── target/
+    ├── TaskManager-0.0.1-SNAPSHOT.jar
+    ├── TaskManager-0.0.1-SNAPSHOT.jar.original
+    └── classes/
+        ├── application.yml
+        └── com/
+            └── soturno/
+                └── TaskManager/
+                    ├── TaskManagerApplication.class
+                    ├── adapter/
+                    │   └── in/
+                    │       └── task/
+                    │           └── TaskController.class
+                    ├── application/
+                    │   └── task/
+                    │       ├── TaskService.class
+                    │       └── dto/
+                    │           └── CreateTaskRequest.class
+                    ├── domain/
+                    │   └── task/
+                    │       └── Task.class
+                    └── infrastructure/
+                        └── task/
+                            └── TaskRepository.class
 ```
