@@ -2,13 +2,17 @@ name: Java CI
 
 on:
   pull_request:
-    branches: [ "main", "dev" ]  # roda antes do merge
+    branches: [ "main", "dev" ]
   push:
     branches: [ "main", "dev" ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    env:
+      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+
 
     steps:
       - name: Checkout do código
@@ -19,12 +23,19 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
+          cache: maven
 
-      - name: Cache do Maven
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+      - name: Build + Testes
+        run: mvn clean verify -B
 
-      - name: Build com Maven
-        run: mvn clean install -B
+ #     - name: Checkstyle
+ #       run: mvn checkstyle:check
+
+      - name: PMD
+        run: mvn pmd:check
+
+      - name: SpotBugs
+        run: mvn com.github.spotbugs:spotbugs-maven-plugin:spotbugs
+
+      - name: 🔐 Dependency Check (OWASP)
+        run: mvn org.owasp:dependency-check-maven:check
