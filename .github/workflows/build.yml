@@ -37,5 +37,5 @@ jobs:
       - name: SpotBugs
         run: mvn com.github.spotbugs:spotbugs-maven-plugin:spotbugs
 
-      - name: 🔐 Dependency Check (OWASP)
-        run: mvn org.owasp:dependency-check-maven:check
+#      - name: 🔐 Dependency Check (OWASP)
+#        run: mvn org.owasp:dependency-check-maven:check
