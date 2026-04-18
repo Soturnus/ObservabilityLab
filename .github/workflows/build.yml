@@ -10,10 +10,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-
-
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
@@ -28,8 +24,11 @@ jobs:
       - name: Build + Testes
         run: mvn clean verify -B
 
- #     - name: Checkstyle
- #       run: mvn checkstyle:check
+      - name: Cache do Maven
+        uses: actions/cache@v5
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
 
       - name: PMD
         run: mvn pmd:check
