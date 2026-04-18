@@ -2,9 +2,9 @@ name: Java CI
 
 on:
   pull_request:
-    branches: [ "main", "dev" ]  # roda antes do merge
+    branches: [ "main", "dev" ]
   push:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
 
 jobs:
   build:
@@ -19,6 +19,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
+          cache: maven
+
+      - name: Build + Testes
+        run: mvn clean verify -B
 
       - name: Cache do Maven
         uses: actions/cache@v5
@@ -26,5 +30,11 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
 
-      - name: Build com Maven
-        run: mvn clean install -B
+      - name: PMD
+        run: mvn pmd:check
+
+      - name: SpotBugs
+        run: mvn com.github.spotbugs:spotbugs-maven-plugin:spotbugs
+
+#      - name: 🔐 Dependency Check (OWASP)
+#        run: mvn org.owasp:dependency-check-maven:check

@@ -1,0 +1,20 @@
+{
+  "extends": [
+    "config:base"
+  ],
+  "timezone": "America/Sao_Paulo",
+  "schedule": ["after 9pm and before 6am"],
+  "labels": ["dependencies"],
+  "prConcurrentLimit": 5,
+  "packageRules": [
+    {
+      "matchManagers": ["maven"],
+      "groupName": "Maven dependencies",
+      "groupSlug": "maven"
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    }
+  ]
+}
